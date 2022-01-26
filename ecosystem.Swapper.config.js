@@ -4,7 +4,7 @@ module.exports = {
       name: 'binanceFutureSaveData',
       interpreter: 'bash',
       script: 'yarn.sh',
-      args: 'run',
+      args: 'dev',
       watch: false,
     },
   ],

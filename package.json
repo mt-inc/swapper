@@ -1,6 +1,6 @@
 {
   "name": "swapper",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Bot for swapping nealy mined tokens on pancakeswap",
   "main": "index.js",
   "author": "Maksym Shamko <max.shamko25@gmail.com>",
@@ -9,17 +9,18 @@
   "packageManager": "yarn@3.1.1",
   "dependencies": {
     "ethers": "^5.5.3",
+    "isomorphic-unfetch": "^3.1.0",
     "pm2": "^5.1.2"
   },
   "scripts": {
     "push": "git push origin master",
     "pull": "git pull origin master",
     "commit": "git add . && git commit -m 'working'",
-    "run": "ts-node --files --project tsconfig.json ./index.ts",
-    "pm:saveData": "pm2 start ecosystem.Swapper.config.js",
-    "pm:saveData:restart": "pm2 restart ecosystem.Swapper.config.js",
-    "pm:saveData:stop": "pm2 stop ecosystem.Swapper.config.js",
-    "pm:saveData:delete": "pm2 delete ecosystem.Swapper.config.js"
+    "dev": "ts-node --files --project tsconfig.json ./index.ts",
+    "pm:swapper": "pm2 start ecosystem.Swapper.config.js",
+    "pm:swapper:restart": "pm2 restart ecosystem.Swapper.config.js",
+    "pm:swapper:stop": "pm2 stop ecosystem.Swapper.config.js",
+    "pm:swapper:delete": "pm2 delete ecosystem.Swapper.config.js"
   },
   "devDependencies": {
     "@types/node": "^17.0.12",
