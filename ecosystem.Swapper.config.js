@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'binanceFutureSaveData',
+      name: 'Swapper',
       interpreter: 'bash',
       script: 'yarn.sh',
       args: 'dev',
