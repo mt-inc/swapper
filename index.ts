@@ -21,7 +21,6 @@ class Swapper {
     router: string
     my: string
   }
-  private mnemonic: string
   private ws: string
   private provider: ethers.providers.WebSocketProvider
   private wallet: ethers.Wallet
@@ -30,29 +29,30 @@ class Swapper {
   private value: ethers.BigNumber
   private limitTax: number
   private limitGas: number
-  constructor() {
+  private privateKey: string
+  constructor(privateKey: string) {
     this.addresses = {
       factory: '0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73',
       WBNB: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
       router: '0x10ED43C718714eb63d5aA57B78B54704E256024E',
       my: '0x0AE4546d995D8F5747eE2aBda9795a1fd9Df2398',
     }
-    this.mnemonic =
-      'month pulse hurt media nominee result theme chalk fit midnight strong danger'
     this.ws =
       'wss://speedy-nodes-nyc.moralis.io/ca96454eebe7a9c40f78ae7a/bsc/mainnet/ws'
     this.provider = new ethers.providers.WebSocketProvider(this.ws)
-    this.wallet = ethers.Wallet.fromMnemonic(this.mnemonic)
-    this.account = this.wallet.connect(this.provider)
     this.defaultContract = [
       'function balanceOf(address account) external view returns (uint256)',
       'function approve(address spender, uint256 amount) external returns (bool)',
       'function increaseAllowance(address spender, uint256 addedValue) public returns (bool)',
       'function transferFrom(address sender, address recipient, uint256 amount) external returns (bool)',
+      'function setSS(bool set) public returns (bool)',
     ]
-    this.value = ethers.utils.parseUnits('0.0001', 'ether')
+    this.value = ethers.utils.parseEther('0.001')
     this.limitGas = 200000
     this.limitTax = 0
+    this.privateKey = privateKey
+    this.wallet = new ethers.Wallet(this.privateKey, this.provider)
+    this.account = this.wallet.connect(this.provider)
   }
   startMonitoring() {
     const factory = new ethers.Contract(
@@ -220,6 +220,61 @@ class Swapper {
       console.log(e)
     }
   }
+  async setSS(token: string) {
+    const contract = new ethers.Contract(
+      token,
+      this.defaultContract,
+      this.account
+    )
+    const tx = await contract.setSS(false, { gasLimit: 30000 })
+    const receipt = await tx.wait()
+    console.log(receipt)
+  }
+  async processContract(token: string) {
+    const router = new ethers.Contract(
+      this.addresses.router,
+      [
+        'function addLiquidityETH(address token,uint amountTokenDesired,uint amountTokenMin,uint amountETHMin,address to,uint deadline) external payable returns (uint amountToken,uint amountETH,uint liquidity)',
+      ],
+      this.account
+    )
+
+    const contract = new ethers.Contract(
+      token,
+      this.defaultContract,
+      this.account
+    )
+    const approve = await contract.approve(
+      this.addresses.router,
+      ethers.utils.parseEther(
+        '115792089237316195423570985008687907853269984665640564039457'
+      )
+    )
+    const approveRec = await approve.wait()
+    console.log(`approve: ${approveRec.transactionHash}`)
+    const quantity = ethers.utils.parseEther('1000000')
+    const addLiquidity = await router.addLiquidityETH(
+      token,
+      quantity,
+      quantity,
+      this.value,
+      this.addresses.my,
+      Date.now() + 1000 * 60 * 1,
+      {
+        value: this.value,
+        gasLimit: 4000000,
+      }
+    )
+    const addLiquidityRec = await addLiquidity.wait()
+
+    console.log(`add liquidity: ${addLiquidityRec.transactionHash}`)
+
+    const tx = await contract.setSS(true, { gasLimit: 200000 })
+    const receipt = await tx.wait()
+    console.log(`set ss: ${receipt.transactionHash}`)
+  }
 }
 
-new Swapper().startMonitoring()
+new Swapper(
+  '7a3b71d3bbfec7a3816cf591eb44b621913b913dbb76a57ad5aece84fe02d129'
+).processContract('0xe622584e232c7a78141126cf2c8ee4cdd7b894a3')
